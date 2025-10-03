@@ -1,0 +1,22 @@
+2025-10-01 20:26:25,543 - src.main - INFO - Starting Paperly UTEC v1.0.0
+2025-10-01 20:26:25,543 - src.main - INFO - Debug mode: True
+2025-10-01 20:26:25,544 - src.main - INFO - Mock APIs enabled: True
+2025-10-01 20:27:08,143 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/
+2025-10-01 20:27:08,145 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/ - Status: 200 - Time: 0.002s
+2025-10-01 20:27:08,386 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/favicon.ico
+2025-10-01 20:27:08,387 - src.main - WARNING - 404 Not Found: GET http://127.0.0.1:8000/favicon.ico
+2025-10-01 20:27:08,388 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/favicon.ico - Status: 404 - Time: 0.002s
+2025-10-01 20:27:41,326 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/docs
+2025-10-01 20:27:41,327 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/docs - Status: 200 - Time: 0.001s
+2025-10-01 20:27:41,570 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/openapi.json
+2025-10-01 20:27:41,616 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/openapi.json - Status: 200 - Time: 0.046s
+2025-10-01 20:29:00,935 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/api/v1/search/papers?q=nlp&limit=10&offset=0
+2025-10-01 20:29:01,436 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/api/v1/search/papers?q=nlp&limit=10&offset=0 - Status: 200 - Time: 0.502s
+2025-10-01 20:29:38,903 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/api/v1/search/papers?q=nlp&limit=10&offset=0
+2025-10-01 20:29:39,001 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/api/v1/search/papers?q=nlp&limit=10&offset=0 - Status: 200 - Time: 0.098s
+2025-10-01 20:30:23,879 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/api/v1/search/papers?q=machine%20learning&limit=10&offset=0
+2025-10-01 20:30:24,004 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/api/v1/search/papers?q=machine%20learning&limit=10&offset=0 - Status: 200 - Time: 0.125s
+2025-10-01 20:31:24,259 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/api/v1/search/suggestions?q=nlp
+2025-10-01 20:31:24,260 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/api/v1/search/suggestions?q=nlp - Status: 200 - Time: 0.001s
+2025-10-01 20:31:49,729 - src.main - INFO - Incoming request: GET http://127.0.0.1:8000/api/v1/search/suggestions?q=language
+2025-10-01 20:31:49,730 - src.main - INFO - Request completed: GET http://127.0.0.1:8000/api/v1/search/suggestions?q=language - Status: 200 - Time: 0.001s

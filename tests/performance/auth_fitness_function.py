@@ -165,13 +165,45 @@ class AuthPerformanceTester:
     def analyze_results(self, results: List[Dict], max_latency_ms: int, scenario: str) -> Dict:
         """Analizar resultados y determinar si pasa el fitness function"""
         if not results:
-            return {"status": "FAIL", "reason": "No results to analyze"}
+            return {
+                "status": "FAIL", 
+                "reason": "No results to analyze",
+                "total_operations": 0,
+                "successful_operations": 0,
+                "failed_operations": 0,
+                "success_rate": 0.0,
+                "min_latency_ms": 0,
+                "max_latency_ms": 0,
+                "avg_latency_ms": 0,
+                "median_latency_ms": 0,
+                "p95_latency_ms": 0,
+                "p99_latency_ms": 0,
+                "max_allowed_latency_ms": max_latency_ms,
+                "scenario": scenario,
+                "timestamp": datetime.now().isoformat()
+            }
         
         successful_results = [r for r in results if r["success"]]
         failed_results = [r for r in results if not r["success"]]
         
         if not successful_results:
-            return {"status": "FAIL", "reason": "No successful operations"}
+            return {
+                "status": "FAIL", 
+                "reason": "No successful operations",
+                "total_operations": len(results),
+                "successful_operations": 0,
+                "failed_operations": len(failed_results),
+                "success_rate": 0.0,
+                "min_latency_ms": 0,
+                "max_latency_ms": 0,
+                "avg_latency_ms": 0,
+                "median_latency_ms": 0,
+                "p95_latency_ms": 0,
+                "p99_latency_ms": 0,
+                "max_allowed_latency_ms": max_latency_ms,
+                "scenario": scenario,
+                "timestamp": datetime.now().isoformat()
+            }
         
         latencies = [r["latency_ms"] for r in successful_results]
         

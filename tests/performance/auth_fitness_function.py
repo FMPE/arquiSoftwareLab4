@@ -41,7 +41,10 @@ class AuthPerformanceTester:
                 end_time = time.time()
                 latency_ms = (end_time - start_time) * 1000
                 
-                return {
+                # Get response details for debugging
+                response_text = await response.text()
+                
+                result = {
                     "operation": "register",
                     "status_code": response.status,
                     "latency_ms": latency_ms,
@@ -49,6 +52,13 @@ class AuthPerformanceTester:
                     "timestamp": datetime.now().isoformat(),
                     "user_id": user_id
                 }
+                
+                # Add error details if failed
+                if response.status != 201:
+                    result["error_detail"] = response_text
+                    result["headers"] = dict(response.headers)
+                
+                return result
         except Exception as e:
             end_time = time.time()
             latency_ms = (end_time - start_time) * 1000
@@ -125,6 +135,9 @@ class AuthPerformanceTester:
         """Ejecutar prueba con usuarios concurrentes"""
         print(f"🚀 Iniciando prueba con {concurrent_users} usuarios concurrentes por {duration_seconds}s")
         
+        # First, test if endpoints are reachable
+        await self.test_endpoints_availability()
+        
         connector = aiohttp.TCPConnector(limit=concurrent_users * 2)
         async with aiohttp.ClientSession(connector=connector) as session:
             start_time = time.time()
@@ -160,7 +173,49 @@ class AuthPerformanceTester:
                 # Pequeña pausa entre batches
                 await asyncio.sleep(0.1)
         
+        # Print some debug info
+        success_count = len([r for r in all_results if r.get("success", False)])
+        print(f"📊 Debug: {success_count}/{len(all_results)} operations successful")
+        
+        # Print first few failures for debugging
+        failures = [r for r in all_results if not r.get("success", False)]
+        if failures:
+            print(f"🔍 First failure example: {failures[0]}")
+        
         return all_results
+    
+    async def test_endpoints_availability(self):
+        """Test basic endpoint availability before load testing"""
+        print("🔍 Testing endpoint availability...")
+        
+        async with aiohttp.ClientSession() as session:
+            # Test health endpoint
+            try:
+                async with session.get(f"{self.base_url}/health", timeout=aiohttp.ClientTimeout(total=5)) as response:
+                    print(f"   Health endpoint: {response.status}")
+            except Exception as e:
+                print(f"   Health endpoint error: {e}")
+                
+            # Test simple register
+            test_user = {
+                "username": f"test_endpoint_{int(time.time())}",
+                "email": f"test_{int(time.time())}@example.com",
+                "password": "test123",
+                "full_name": "Test User"
+            }
+            
+            try:
+                async with session.post(
+                    f"{self.base_url}/api/v1/auth/register",
+                    json=test_user,
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    print(f"   Register endpoint: {response.status}")
+                    if response.status != 201:
+                        text = await response.text()
+                        print(f"   Register error: {text[:200]}...")
+            except Exception as e:
+                print(f"   Register endpoint error: {e}")
     
     def analyze_results(self, results: List[Dict], max_latency_ms: int, scenario: str) -> Dict:
         """Analizar resultados y determinar si pasa el fitness function"""

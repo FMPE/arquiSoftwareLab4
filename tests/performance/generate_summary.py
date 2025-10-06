@@ -21,9 +21,31 @@ def load_performance_results() -> Dict:
         }
     }
     
-    # Buscar archivos de resultados
-    auth_files = glob.glob("reports/auth-performance-*/auth_performance_*.json")
-    search_files = glob.glob("reports/search-performance-*/search_performance_*.json")
+    # Crear directorio de resumen si no existe
+    os.makedirs("reports/summary", exist_ok=True)
+    
+    # Buscar archivos de resultados con múltiples patrones
+    auth_patterns = [
+        "reports/auth-performance-*/auth_performance_*.json",
+        "reports/auth_performance_*.json",
+        "./auth_performance_*.json"
+    ]
+    
+    search_patterns = [
+        "reports/search-performance-*/search_performance_*.json", 
+        "reports/search_performance_*.json",
+        "./search_performance_*.json"
+    ]
+    
+    # Buscar archivos de auth
+    auth_files = []
+    for pattern in auth_patterns:
+        auth_files.extend(glob.glob(pattern))
+    
+    # Buscar archivos de search  
+    search_files = []
+    for pattern in search_patterns:
+        search_files.extend(glob.glob(pattern))
     
     # Cargar resultados de auth
     for file_path in auth_files:

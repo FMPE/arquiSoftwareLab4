@@ -11,6 +11,10 @@ import statistics
 from datetime import datetime
 from typing import List, Dict
 import os
+import sys
+
+# Asegurar que el directorio reports existe
+os.makedirs("reports", exist_ok=True)
 
 class AuthPerformanceTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
@@ -317,7 +321,12 @@ async def main():
             
     except Exception as e:
         print(f"❌ Test failed with error: {e}")
+        import traceback
+        traceback.print_exc()
         exit(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,0 +1,272 @@
+name: Fitness Functions - Performance Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Ejecutar diariamente a las 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_intensity:
+        description: 'Test intensity level'
+        required: true
+        default: 'normal'
+        type: choice
+        options:
+        - light
+        - normal
+        - heavy
+
+env:
+  PYTHON_VERSION: '3.9'
+  POETRY_VERSION: '1.6.1'
+
+jobs:
+  setup-and-build:
+    name: Setup and Build Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust pytest-benchmark httpx asyncio
+        
+    - name: Create directories
+      run: |
+        mkdir -p data logs
+        
+    - name: Initialize database
+      run: |
+        python init_db_simple.py
+        
+    - name: Start application in background
+      run: |
+        nohup uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+    - name: Health check
+      run: |
+        curl -f http://localhost:8000/health || exit 1
+        
+    - name: Upload application data
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-data
+        path: |
+          data/
+          logs/
+        retention-days: 1
+
+  fitness-function-auth:
+    name: 🔐 Fitness Function - Authentication Latency
+    runs-on: ubuntu-latest
+    needs: setup-and-build
+    
+    strategy:
+      matrix:
+        test-scenario:
+          - name: "good"
+            concurrent_users: 300
+            max_latency_ms: 200
+            duration: "30s"
+          - name: "ok"
+            concurrent_users: 500
+            max_latency_ms: 400
+            duration: "45s"
+          - name: "stress"
+            concurrent_users: 1000
+            max_latency_ms: 1000
+            duration: "60s"
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Download application data
+      uses: actions/download-artifact@v3
+      with:
+        name: app-data
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust pytest-benchmark httpx asyncio aiohttp
+        
+    - name: Start application
+      run: |
+        nohup uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+    - name: Run Authentication Load Test
+      run: |
+        python tests/performance/auth_fitness_function.py \
+          --users ${{ matrix.test-scenario.concurrent_users }} \
+          --duration ${{ matrix.test-scenario.duration }} \
+          --max-latency ${{ matrix.test-scenario.max_latency_ms }} \
+          --scenario ${{ matrix.test-scenario.name }}
+          
+    - name: Upload Auth Performance Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: auth-performance-${{ matrix.test-scenario.name }}
+        path: |
+          reports/auth_performance_*.json
+          reports/auth_performance_*.html
+        retention-days: 30
+
+  fitness-function-search:
+    name: 🔍 Fitness Function - Search Latency
+    runs-on: ubuntu-latest
+    needs: setup-and-build
+    
+    strategy:
+      matrix:
+        test-scenario:
+          - name: "good"
+            concurrent_users: 200
+            max_latency_ms: 300
+            duration: "30s"
+          - name: "ok"
+            concurrent_users: 400
+            max_latency_ms: 500
+            duration: "45s"
+          - name: "stress"
+            concurrent_users: 800
+            max_latency_ms: 1000
+            duration: "60s"
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Download application data
+      uses: actions/download-artifact@v3
+      with:
+        name: app-data
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust pytest-benchmark httpx asyncio aiohttp
+        
+    - name: Start application
+      run: |
+        nohup uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+    - name: Run Search Load Test
+      run: |
+        python tests/performance/search_fitness_function.py \
+          --users ${{ matrix.test-scenario.concurrent_users }} \
+          --duration ${{ matrix.test-scenario.duration }} \
+          --max-latency ${{ matrix.test-scenario.max_latency_ms }} \
+          --scenario ${{ matrix.test-scenario.name }}
+          
+    - name: Upload Search Performance Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: search-performance-${{ matrix.test-scenario.name }}
+        path: |
+          reports/search_performance_*.json
+          reports/search_performance_*.html
+        retention-days: 30
+
+  performance-summary:
+    name: 📊 Performance Summary & Quality Gate
+    runs-on: ubuntu-latest
+    needs: [fitness-function-auth, fitness-function-search]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        pip install jinja2 matplotlib pandas
+        
+    - name: Download all performance reports
+      uses: actions/download-artifact@v3
+      with:
+        path: ./reports
+        
+    - name: Generate Performance Summary
+      run: |
+        python tests/performance/generate_summary.py
+        
+    - name: Upload Summary Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-summary
+        path: |
+          reports/summary/
+        retention-days: 90
+        
+    - name: Comment PR with Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = './reports/summary/pr_comment.md';
+          if (fs.existsSync(path)) {
+            const comment = fs.readFileSync(path, 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+          
+    - name: Quality Gate Check
+      run: |
+        python tests/performance/quality_gate.py
+        
+    - name: Fail if Quality Gate Failed
+      run: |
+        if [ -f "reports/summary/quality_gate_failed" ]; then
+          echo "❌ Quality Gate Failed!"
+          cat reports/summary/quality_gate_failed
+          exit 1
+        else
+          echo "✅ Quality Gate Passed!"
+        fi

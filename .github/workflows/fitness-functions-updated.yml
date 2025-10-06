@@ -70,7 +70,7 @@ jobs:
         curl -f http://localhost:8000/health || exit 1
         
     - name: Upload application data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-data
         path: |
@@ -109,7 +109,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         
     - name: Download application data
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: app-data
         
@@ -133,7 +133,7 @@ jobs:
           --scenario ${{ matrix.test-scenario.name }}
           
     - name: Upload Auth Performance Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: auth-performance-${{ matrix.test-scenario.name }}
         path: |
@@ -172,7 +172,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         
     - name: Download application data
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: app-data
         
@@ -196,7 +196,7 @@ jobs:
           --scenario ${{ matrix.test-scenario.name }}
           
     - name: Upload Search Performance Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: search-performance-${{ matrix.test-scenario.name }}
         path: |
@@ -224,7 +224,7 @@ jobs:
         pip install jinja2 matplotlib pandas
         
     - name: Download all performance reports
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: ./reports
         
@@ -233,7 +233,7 @@ jobs:
         python tests/performance/generate_summary.py
         
     - name: Upload Summary Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-summary
         path: |
